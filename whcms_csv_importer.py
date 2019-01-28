@@ -49,7 +49,7 @@ def import_csv(im, csv_fname, black_list={}):
     count = 0
     for mapping in dicts:
         collision_key = blacklist_key(mapping)
-        if collision_key in black_list: break
+        if collision_key in black_list: continue
 
         args = [mapping[_key] for _key in CSV_HEADER]
         new_password = im.enter_new_client_info(*args)
