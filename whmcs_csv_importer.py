@@ -45,7 +45,7 @@ def import_csv(im, csv_fname, black_list={}):
     """
     Import data from 'csv_fname' that has not already been logged to 'log_fname'
 
-    :param WhcmsCsvImporter im:
+    :param WhmcsCsvImporter im:
     :param str csv_fname: input CSV file name
     :param dict[str, dict[str, str]] black_list: entries that we've already processed
     :return: same blacklist passed as a param but may have new entries added
@@ -86,7 +86,7 @@ def read_csv(fname):
     return matrix
 
 
-class WhcmsCsvImporter(object):
+class WhmcsCsvImporter(object):
     def __init__(self):
         self.driver = webdriver.Firefox()  # type: WebDriver
         self.driver.implicitly_wait(20)
@@ -208,7 +208,7 @@ if __name__ == "__main__":
     password = sys.argv[3]
     csv_fname = sys.argv[4]
 
-    importer = WhcmsCsvImporter()
+    importer = WhmcsCsvImporter()
     importer.login(url, username, password)
     importer.open_new_client_page()
     black_list = import_csv(importer, csv_fname)
