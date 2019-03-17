@@ -21,7 +21,6 @@ class lamba_is_truthy(object):
         return self.truthy_lambda(driver)
 
 
-ACCOUNT_NO_KEY = "Account No."
 PASSWORD_KEY = "Password"
 
 # Maps header in CSV file to argument name in
@@ -29,32 +28,22 @@ PASSWORD_KEY = "Password"
 # `enter_new_client_info` as a dict so it can be out of order.
 #
 CSV_HEADER = {
-    ACCOUNT_NO_KEY: "account_no",
     "First Name": "first_name",
     "Last Name": "last_name",
-    "Company": "company_name",
-    "Email": "email",
-    "Address 1": "address",
+    "Company Name": "company_name",
+    "Email Address": "email",
+    "Street1": "address",
     "City": "city",
-    "State/ Region": "state",
-    "Post Code": "zip",
-    "Phone Number": "phone",
-    "URL ": "url",
-    "Wyoming Network Client (check box)": "is_network_client",
-    "CSS #": "css_no",
+    "State": "state",
+    "Zip": "zip",
+    "Main Phone": "phone",
+    "URL": "url",
+    "CHECK: Wyoming Network Client": "is_network_client",
+    "CSS#": "css_no",
 }
 
 
-def blacklist_key(mapping):
-    return mapping[ACCOUNT_NO_KEY]
-
-
-def build_blacklist(log_fname):
-    dicts = read_csv(log_fname)
-    return {blacklist_key(mapping): mapping for mapping in dicts}
-
-
-def import_csv(im, csv_fname, black_list={}, dryrun=True):
+def import_csv(im, csv_fname, dryrun=True):
     """
     Import data from 'csv_fname' that has not already been logged to 'log_fname'
 
@@ -67,12 +56,8 @@ def import_csv(im, csv_fname, black_list={}, dryrun=True):
     dicts = read_csv(csv_fname)
     count = 0
     for row_dict in dicts:
-        collision_key = blacklist_key(row_dict)
-        if collision_key in black_list:
-            continue
-
         kw_args = {CSV_HEADER[_key]: row_dict[_key] for _key in CSV_HEADER}
-        new_password = im.enter_new_client_info(**kw_args)
+        im.enter_new_client_info(**kw_args)
 
         # submit new client info
         if not dryrun:
@@ -81,12 +66,9 @@ def import_csv(im, csv_fname, black_list={}, dryrun=True):
             WebDriverWait(im.driver, 20).until(
                 EC.text_to_be_present_in_element((By.CSS_SELECTOR, "h1"), "Client Profile")
             )
+        print('account:\t{}'.format(kw_args['email']))
         im.open_new_client_page()
-
-        row_dict[PASSWORD_KEY] = new_password
-        black_list[collision_key] = row_dict
-
-    return black_list
+    print('Import complete')
 
 
 def open_search_client_page(driver, timeout=20):
@@ -195,7 +177,6 @@ class WhmcsCsvImporter(object):
 
     def enter_new_client_info(
             self,
-            account_no,
             first_name,
             last_name,
             company_name,
@@ -228,15 +209,13 @@ class WhmcsCsvImporter(object):
         self._check_radio_button("customfield[16]", is_network_client == "Yes")
         self._fill_text_input("customfield[17]", css_no)
 
-        self._fill_text_input("notes", "Account No: {}".format(account_no))
+        self._fill_text_input("notes", "Account No: {}".format(css_no))
 
         # custom "Payment Method" field
         self._select_dropdown_option("paymentmethod", "WN Import")
 
         # custom "Client Group" field
         self._select_dropdown_option("groupid", "Wyoming Network Client")
-
-        return password
 
     def xkcd_password(self, xkcd_url="https://preshing.com/20110811/xkcd-password-generator/"):
         element_id = "xkcd_pw_gen_result"
@@ -246,7 +225,6 @@ class WhmcsCsvImporter(object):
         password = xkcd_result.text
         xkcd_driver.close()
         return password
-
 
     def _check_radio_button(self, button_name, should_check):
         cb = self.driver.find_element_by_name(button_name)
@@ -285,6 +263,6 @@ if __name__ == "__main__":
     importer = WhmcsCsvImporter()
     importer.login(url, username, password)
     importer.open_new_client_page()
-    black_list = import_csv(importer, csv_fname)
+    import_csv(importer, csv_fname, dryrun=False)
     importer.logout()
     importer.cleanup()
