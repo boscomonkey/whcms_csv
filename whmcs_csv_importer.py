@@ -205,11 +205,12 @@ class WhmcsCsvImporter(object):
         self._fill_text_input("postcode", zip)
         self._fill_text_input("phonenumber", phone)
 
+        self._fill_text_input("notes", "Wyonming Network Client: {}".format(css_no))
+
+        # custom URL, is_Wyoming_network_client, CSS_no
         self._fill_text_input("customfield[5]", url)
         self._check_radio_button("customfield[16]", is_network_client == "Yes")
         self._fill_text_input("customfield[17]", css_no)
-
-        self._fill_text_input("notes", "Account No: {}".format(css_no))
 
         # custom "Payment Method" field
         self._select_dropdown_option("paymentmethod", "WN Import")
