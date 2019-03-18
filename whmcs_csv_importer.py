@@ -4,9 +4,9 @@ from selenium.webdriver.firefox.webdriver import WebDriver
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import Select, WebDriverWait
 from us_states_abbreviations import STATES
+from xkcdpass import xkcd_password as xp
 
 import csv
-import random_password
 
 
 class lamba_is_truthy(object):
@@ -37,19 +37,21 @@ CSV_HEADER = {
     "State": "state",
     "Zip": "zip",
     "Main Phone": "phone",
+
+    # custom fields
     "URL": "url",
     "CHECK: Wyoming Network Client": "is_network_client",
     "CSS#": "css_no",
 }
 
 
-def import_csv(im, csv_fname, dryrun=True):
+def import_csv(im, csv_fname, dry_run=True):
     """
     Import data from 'csv_fname' that has not already been logged to 'log_fname'
 
     :param WhmcsCsvImporter im:
     :param str csv_fname: input CSV file name
-    :param dict[str, dict[str, str]] black_list: entries that we've already processed
+    :param bool dry_run: perform a dry run test (i.e., do not submit new clients)
     :return: same blacklist passed as a param but may have new entries added
     :rtype: dict[str, dict[str, str]]
     """
@@ -60,7 +62,7 @@ def import_csv(im, csv_fname, dryrun=True):
         im.enter_new_client_info(**kw_args)
 
         # submit new client info
-        if not dryrun:
+        if not dry_run:
             btn_submit = im.driver.find_element_by_css_selector('input[value="Add Client"]')
             btn_submit.submit()
             WebDriverWait(im.driver, 20).until(
@@ -130,15 +132,14 @@ def wait_until(driver, lambda_to_invoke, timeout=10):
 
 
 class WhmcsCsvImporter(object):
-    def __init__(self):
-        self.driver = webdriver.Firefox()  # type: WebDriver
-        self.driver.implicitly_wait(20)
 
     def cleanup(self):
         self.driver.close()
         self.driver = None
 
     def login(self, url, username, password):
+        self.driver = webdriver.Firefox()  # type: WebDriver
+        self.driver.implicitly_wait(20)
         self.driver.get(url)
 
         # enter username
@@ -218,13 +219,8 @@ class WhmcsCsvImporter(object):
         # custom "Client Group" field
         self._select_dropdown_option("groupid", "Wyoming Network Client")
 
-    def xkcd_password(self, xkcd_url="https://preshing.com/20110811/xkcd-password-generator/"):
-        element_id = "xkcd_pw_gen_result"
-        xkcd_driver = webdriver.Firefox()
-        xkcd_driver.get(xkcd_url)
-        xkcd_result = xkcd_driver.find_element_by_id(element_id)
-        password = xkcd_result.text
-        xkcd_driver.close()
+    def xkcd_password(self, num_words=4):
+        password = xp.generate_xkcdpassword(xp.generate_wordlist(wordfile=xp.locate_wordfile()), numwords=num_words)
         return password
 
     def _check_radio_button(self, button_name, should_check):
@@ -260,10 +256,14 @@ if __name__ == "__main__":
     username = sys.argv[2]
     password = sys.argv[3]
     csv_fname = sys.argv[4]
+    if len(sys.argv) == 6:
+        commit = (sys.argv[5] == 'SUBMIT')
+    else:
+        commit = False
 
     importer = WhmcsCsvImporter()
     importer.login(url, username, password)
     importer.open_new_client_page()
-    import_csv(importer, csv_fname, dryrun=False)
+    import_csv(importer, csv_fname, not commit)
     importer.logout()
     importer.cleanup()
