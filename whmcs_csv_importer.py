@@ -37,7 +37,6 @@ CSV_HEADER = {
     "State": "state",
     "Zip": "zip",
     "Main Phone": "phone",
-
     # custom fields
     "URL": "url",
     "CHECK: Wyoming Network Client": "is_network_client",
@@ -63,14 +62,18 @@ def import_csv(im, csv_fname, dry_run=True):
 
         # submit new client info
         if not dry_run:
-            btn_submit = im.driver.find_element_by_css_selector('input[value="Add Client"]')
+            btn_submit = im.driver.find_element_by_css_selector(
+                'input[value="Add Client"]'
+            )
             btn_submit.submit()
             WebDriverWait(im.driver, 20).until(
-                EC.text_to_be_present_in_element((By.CSS_SELECTOR, "h1"), "Client Profile")
+                EC.text_to_be_present_in_element(
+                    (By.CSS_SELECTOR, "h1"), "Client Profile"
+                )
             )
-        print('account:\t{}'.format(kw_args['email']))
+        print("account:\t{}".format(kw_args["email"]))
         im.open_new_client_page()
-    print('Import complete')
+    print("Import complete")
 
 
 def open_search_client_page(driver, timeout=20):
@@ -132,7 +135,6 @@ def wait_until(driver, lambda_to_invoke, timeout=10):
 
 
 class WhmcsCsvImporter(object):
-
     def cleanup(self):
         self.driver.close()
         self.driver = None
@@ -177,19 +179,19 @@ class WhmcsCsvImporter(object):
         wait_for_page_completion(self.driver)
 
     def enter_new_client_info(
-            self,
-            first_name,
-            last_name,
-            company_name,
-            email,
-            address,
-            city,
-            state,
-            zip,
-            phone,
-            url,
-            is_network_client,
-            css_no,
+        self,
+        first_name,
+        last_name,
+        company_name,
+        email,
+        address,
+        city,
+        state,
+        zip,
+        phone,
+        url,
+        is_network_client,
+        css_no,
     ):
         self._fill_text_input("firstname", first_name)
         self._fill_text_input("lastname", last_name)
@@ -220,7 +222,9 @@ class WhmcsCsvImporter(object):
         self._select_dropdown_option("groupid", "Wyoming Network Client")
 
     def xkcd_password(self, num_words=4):
-        password = xp.generate_xkcdpassword(xp.generate_wordlist(wordfile=xp.locate_wordfile()), numwords=num_words)
+        password = xp.generate_xkcdpassword(
+            xp.generate_wordlist(wordfile=xp.locate_wordfile()), numwords=num_words
+        )
         return password
 
     def _check_radio_button(self, button_name, should_check):
@@ -256,10 +260,7 @@ if __name__ == "__main__":
     username = sys.argv[2]
     password = sys.argv[3]
     csv_fname = sys.argv[4]
-    if len(sys.argv) == 6:
-        commit = (sys.argv[5] == 'SUBMIT')
-    else:
-        commit = False
+    commit = len(sys.argv) == 6 and sys.argv[5] == "SUBMIT"
 
     importer = WhmcsCsvImporter()
     importer.login(url, username, password)
