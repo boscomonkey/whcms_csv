@@ -30,8 +30,8 @@ PASSWORD_KEY = "Password"
 CSV_HEADER = {
     "First Name": "first_name",
     "Last Name": "last_name",
-    "Company Name": "company_name",
-    "Email Address": "email",
+    "Company": "company_name",
+    "Email": "email",
     "Street1": "address",
     "City": "city",
     "State": "state",
@@ -58,7 +58,7 @@ def import_csv(im, csv_fname, dry_run=True):
     count = 0
     for row_dict in dicts:
         kw_args = {CSV_HEADER[_key]: row_dict[_key] for _key in CSV_HEADER}
-        im.enter_new_client_info(**kw_args)
+        password = im.enter_new_client_info(**kw_args)
 
         # submit new client info
         if not dry_run:
@@ -71,7 +71,9 @@ def import_csv(im, csv_fname, dry_run=True):
                     (By.CSS_SELECTOR, "h1"), "Client Profile"
                 )
             )
-        print("account:\t{}".format(kw_args["email"]))
+
+        count += 1
+        print("account {}:\t{}\t'{}'".format(count, kw_args["email"], password))
         im.open_new_client_page()
     print("Import complete")
 
@@ -220,6 +222,7 @@ class WhmcsCsvImporter(object):
 
         # custom "Client Group" field
         self._select_dropdown_option("groupid", "Wyoming Network Client")
+        return password
 
     def xkcd_password(self, num_words=4):
         password = xp.generate_xkcdpassword(
